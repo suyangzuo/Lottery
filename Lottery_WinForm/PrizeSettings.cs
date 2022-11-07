@@ -12,6 +12,8 @@ namespace Lottery_WinForm
 {
     public partial class PrizeSettings : Form
     {
+        private static bool modifyIsSaved = false;
+
         public PrizeSettings()
         {
             InitializeComponent();

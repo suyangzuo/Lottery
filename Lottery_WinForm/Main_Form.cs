@@ -1,13 +1,9 @@
+using System;
+
 namespace Lottery_WinForm
 {
     public partial class Main_Form : Form
     {
-        private enum State
-        {
-            Running, Suspend, Stop
-        }
-        private static string currentName;
-        private static State currentState = State.Stop;
 
         public Main_Form()
         {
@@ -20,13 +16,13 @@ namespace Lottery_WinForm
             this.Menu2_Exit.Click += ExitProgram;
             this.FormClosing += FormIsClosing;
             this.Menu2_ReadFile.Click += ReadNameList;
-            this.Button_Go.Click += RollNames;
+            this.Button_Go.Click += ButtonGo_Click;
             this.Menu2_PrizeSettings.Click += PrizeSetting;
             foreach (var item in Menu1_Theme.DropDownItems)
             {
                 if (item is ToolStripMenuItem dropdownItem)
                 {
-                    dropdownItem.Click += (object sender, EventArgs e) =>
+                    dropdownItem.Click += (object? sender, EventArgs e) =>
                     {
                         if (sender is ToolStripMenuItem menuItem)
                         {
@@ -45,29 +41,20 @@ namespace Lottery_WinForm
             }
         }
 
-        private void ExitProgram(object sender, EventArgs e)
+        private void ExitProgram(object? sender, EventArgs e)
         {
             var result = MessageBox.Show("退出程序？", "退出", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (result == DialogResult.Yes)
-            {
-                Environment.Exit(0);
-            }
+            if (result == DialogResult.Yes) Environment.Exit(0);
         }
 
-        private void FormIsClosing(object sender, FormClosingEventArgs e)
+        private void FormIsClosing(object? sender, FormClosingEventArgs e)
         {
             var result = MessageBox.Show("退出程序？", "退出", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (result == DialogResult.No)
-            {
-                e.Cancel = true;
-            }
-            else
-            {
-                Environment.Exit(0);
-            }
+            if (result == DialogResult.No) e.Cancel = true;
+            else Environment.Exit(0);
         }
 
-        private void ReadNameList(object sender, EventArgs e)
+        private void ReadNameList(object? sender, EventArgs e)
         {
             ReadTextDialog.InitialDirectory = $"{Application.StartupPath}";
             ReadTextDialog.Filter = "文本文档(*.txt)|*.txt";
@@ -77,7 +64,7 @@ namespace Lottery_WinForm
             {
                 return;
             }
-            string textFileName = ReadTextDialog.FileName;
+            string? textFileName = ReadTextDialog.FileName;
             if (string.IsNullOrEmpty(textFileName)) return;
             using var textReader = new StreamReader(textFileName, Encoding.UTF8);
             string nameReaded = textReader.ReadToEnd();
@@ -86,7 +73,8 @@ namespace Lottery_WinForm
                 Label_Name.Text = "文本为空！";
                 return;
             }
-            Information.Names.AddRange(nameReaded.Split("，"));
+            Names.AddRange(nameReaded.Split("，"));
+            Label_Name.Text = "名单读取成功！";
         }
 
         private void SetBackColor(object sender, EventArgs e)
@@ -94,15 +82,15 @@ namespace Lottery_WinForm
             //Waiting for code...
         }
 
-        private void PrizeSetting(object sender, EventArgs e)
+        private void PrizeSetting(object? sender, EventArgs e)
         {
             var prizeSettingsForm = new PrizeSettings(this);
             prizeSettingsForm.Show();
         }
 
-        private void RollNames(object sender, EventArgs e)
+        private void ButtonGo_Click(object? sender, EventArgs e)
         {
-            if (Information.Names.Count <= 0)
+            if (Names.Count <= 0)
             {
                 Label_Name.Text = "尚未导入名单";
                 return;
@@ -111,6 +99,7 @@ namespace Lottery_WinForm
             {
                 currentState = State.Suspend;
                 Button_Go.Text = "继续";
+                GetLotteryResult();
                 return;
             }
             if (currentState == State.Stop || currentState == State.Suspend)
@@ -125,8 +114,11 @@ namespace Lottery_WinForm
                 {
                     Thread.Sleep(300);
                     if (currentState != State.Running) return;
-                    int index = r.Next(0, Information.Names.Count);
-                    currentName = Information.Names[index];
+                    Monitor.Enter(r);
+                    int nameIndex = r.Next(0, Names.Count);
+                    int prizeIndex = r.Next(0, 1);
+                    Monitor.Exit(r);
+                    lock (objLock) currentName = Names[nameIndex];
                     if (this.InvokeRequired)
                     {
                         this.Invoke(() =>
@@ -137,6 +129,11 @@ namespace Lottery_WinForm
                 }
             });
             threadRollNames.Start();
+        }
+
+        private void GetLotteryResult()
+        {
+
         }
     }
 }

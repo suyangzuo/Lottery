@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lottery_WinForm", "Lottery_
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决方案项", "{FBF25B34-E034-4B06-A888-082A45712CFA}"
 	ProjectSection(SolutionItems) = preProject
-		Lottery_WinForm\.gitignore = Lottery_WinForm\.gitignore
+		.gitignore = .gitignore
 		README.md = README.md
 	EndProjectSection
 EndProject
